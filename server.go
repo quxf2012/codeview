@@ -36,7 +36,9 @@ func newServer(cfg *config) *server {
 	s.mux.HandleFunc("/api/tree", s.handleTree)
 	s.mux.HandleFunc("/api/file", s.handleFile)
 	s.mux.HandleFunc("/api/search", s.handleSearch)
-	s.mux.HandleFunc("/api/grep", s.handleGrep)
+	if cfg.grep {
+		s.mux.HandleFunc("/api/grep", s.handleGrep)
+	}
 	s.mux.HandleFunc("/api/watch", s.handleWatch)
 	s.mux.HandleFunc("/api/theme.css", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/css; charset=utf-8")
@@ -375,5 +377,5 @@ func (s *server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
-	s.index.Execute(w, map[string]any{"Title": s.cfg.title, "Version": version, "Lang": s.cfg.lang, "Themes": themes})
+	s.index.Execute(w, map[string]any{"Title": s.cfg.title, "Version": version, "Lang": s.cfg.lang, "Themes": themes, "Grep": s.cfg.grep})
 }

@@ -4,6 +4,9 @@
   "use strict";
 
   const SITE = document.title;
+  // 全文搜索由服务端 -grep 开启；关闭时搜索框只做文件名搜索，也不提示 "/" 用法
+  const GREP = document.documentElement.dataset.grep === "true";
+  if (!GREP) document.getElementById("search").dataset.i18nPlaceholder = "searchPlaceholderName";
 
   // ---------- 多语言 ----------
   // 默认语言由服务端 -lang 决定（写在 <html data-default-lang>），浏览器里切换后记在 localStorage。
@@ -21,8 +24,8 @@
       binary: "Binary file, cannot be previewed.",
       gone: "This file was deleted or renamed. Showing its last content.",
       dirGone: "This directory was deleted", updated: "Updated",
-      searching: "Searching…", noGrep: "No files contain “{0}”", noMatch: "No matching files. Type /{0} to search file contents",
-      toggleTree: "Show / hide file tree (b)", searchPlaceholder: "Go to file (t)  ·  start with / to search contents",
+      searching: "Searching…", noGrep: "No files contain “{0}”", noMatch: "No matching files. Type /{0} to search file contents", noMatchName: "No matching files",
+      toggleTree: "Show / hide file tree (b)", searchPlaceholder: "Go to file (t)  ·  start with / to search contents", searchPlaceholderName: "Go to file (t)",
       toggleTheme: "Color theme", theme: "Color theme", themeAuto: "Auto (follow system)", themeDark: "Dark", themeLight: "Light", toggleLang: "切换到中文", langLabel: "中",
       files: "Files", collapseAll: "Collapse all", loading: "Loading…",
     },
@@ -38,8 +41,8 @@
       binary: "二进制文件，无法预览。",
       gone: "文件已被删除或改名，下面是删除前的内容",
       dirGone: "目录已被删除", updated: "已更新",
-      searching: "搜索中…", noGrep: "没有找到包含 “{0}” 的文件", noMatch: "没有匹配的文件，输入 /{0} 可全文搜索",
-      toggleTree: "显示/隐藏文件树 (b)", searchPlaceholder: "查找文件 (t)   ·   输入 / 开头做全文搜索",
+      searching: "搜索中…", noGrep: "没有找到包含 “{0}” 的文件", noMatch: "没有匹配的文件，输入 /{0} 可全文搜索", noMatchName: "没有匹配的文件",
+      toggleTree: "显示/隐藏文件树 (b)", searchPlaceholder: "查找文件 (t)   ·   输入 / 开头做全文搜索", searchPlaceholderName: "查找文件 (t)",
       toggleTheme: "配色主题", theme: "配色主题", themeAuto: "自动（跟随系统）", themeDark: "深色", themeLight: "浅色", toggleLang: "Switch to English", langLabel: "EN",
       files: "文件", collapseAll: "全部折叠", loading: "加载中…",
     },
@@ -851,7 +854,7 @@
     const raw = searchInput.value.trim();
     if (!raw) return hideResults();
     const seq = ++searchSeq;
-    const grep = raw.startsWith("/");
+    const grep = GREP && raw.startsWith("/");
     const q = grep ? raw.slice(1).trim() : raw;
     if (!q) return hideResults();
     resultsEl.hidden = false;
@@ -869,7 +872,7 @@
         if (seq !== searchSeq) return;
         resultsEl.innerHTML = hits.length ? hits.map((h) => `<a class="sr-item" href="/${h.type === "dir" ? "tree" : "blob"}/${esc(enc(h.path))}" data-nav>
             ${h.type === "dir" ? ICON.dir : fileIcon(basename(h.path))}<span>${highlightMatch(h.path, q)}</span></a>`).join("")
-          : `<div class="sr-empty">${t("noMatch", esc(q))}</div>`;
+          : `<div class="sr-empty">${GREP ? t("noMatch", esc(q)) : t("noMatchName")}</div>`;
       }
       selIdx = -1;
     } catch (err) {
@@ -879,7 +882,7 @@
 
   searchInput.addEventListener("input", () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(doSearch, searchInput.value.trim().startsWith("/") ? 300 : 120);
+    searchTimer = setTimeout(doSearch, GREP && searchInput.value.trim().startsWith("/") ? 300 : 120);
   });
   searchInput.addEventListener("focus", () => { if (searchInput.value.trim()) doSearch(); });
   searchInput.addEventListener("keydown", (ev) => {
@@ -910,7 +913,7 @@
       ev.preventDefault();
       searchInput.focus();
       searchInput.select();
-      if (ev.key === "/") { searchInput.value = "/"; }
+      if (ev.key === "/" && GREP) { searchInput.value = "/"; }
     } else if (ev.key === "b") {
       toggleSidebar();
     } else if (ev.key === "o") {

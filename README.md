@@ -13,7 +13,7 @@ Point it at any directory and browse the tree, syntax-highlighted code and rende
 - **Syntax highlighting**: powered by [chroma](https://github.com/alecthomas/chroma), 200+ languages; extensionless scripts are detected by shebang. Line numbers are clickable and produce `#L20` links that scroll to and highlight the line.
 - **Markdown**: powered by [goldmark](https://github.com/yuin/goldmark) with GFM (tables, task lists, strikethrough, autolinks), footnotes, highlighted code blocks and YAML front matter. Heading anchors follow GitHub's rules (including CJK text); relative links and images are rewritten to work. Toggle between preview and source.
 - **Outline**: a side panel with Markdown headings; functions and types for Go / Python / Shell / JS / TS; the top two levels of keys for YAML.
-- **Search**: press `t` for fuzzy file-name search; type `/keyword` for full-text search and jump straight to the matching line.
+- **Search**: press `t` for fuzzy file-name search. Full-text search (type `/keyword`, then jump straight to the matching line) is off by default and enabled with `-grep`, since it reads every file on each query.
 - **Live reload**: when the file or directory you are viewing changes, only that part of the page is refreshed. Scroll position, preview/source mode and the tree state are kept. Background tabs drop their connection and resync when they become visible again or after a reconnect.
 - **Change highlighting**: the content you saw when the page first opened a file is the baseline; later edits are highlighted per line (green added, blue modified, a red rule where lines were removed) with `+added ~modified −removed` counts. In Markdown preview the marks land on the matching paragraph, list item, table row or code line. Can be toggled and reset; reloading the page resets it too.
 - Images and PDFs are previewed inline; binaries and very large files get a download link. Raw / download / copy contents / copy path.
@@ -62,6 +62,7 @@ Then open http://localhost:8080 in your browser.
 | `-hidden` | `false` | Show dotfiles |
 | `-ignore` | `.git,node_modules,__pycache__,.venv,.idea,.vscode` | Comma-separated file / directory names to ignore |
 | `-max-size` | `2097152` | Files larger than this many bytes are not rendered |
+| `-grep` | `false` | Enable full-text search; it scans files on every query, which can be slow on large trees; env `CODEVIEW_GREP=1` |
 | `-lang` | `en` | Default UI language, `en` or `zh`; can be switched in the page at any time; env `CODEVIEW_LANG` |
 | `-version` | | Print version and exit |
 
@@ -70,7 +71,7 @@ Then open http://localhost:8080 in your browser.
 | Key | Action |
 |---|---|
 | `t` | Go to file |
-| `/` | Full-text search |
+| `/` | Full-text search (with `-grep`) |
 | `↑` `↓` `Enter` `Esc` | Navigate search results |
 | `b` | Show / hide file tree |
 | `o` | Show / hide outline |
@@ -108,7 +109,7 @@ deploy/        example systemd unit
 | `GET /api/tree?path=` | Directory listing + README |
 | `GET /api/file?path=` | File info, rendered HTML, raw text and outline |
 | `GET /api/search?q=` | File-name search |
-| `GET /api/grep?q=` | Full-text search |
+| `GET /api/grep?q=` | Full-text search (only with `-grep`) |
 | `GET /api/watch?p=..&p=..` | SSE stream of changes to these paths |
 | `GET /raw/<path>` | Raw file (`?download=1` to download) |
 | `/tree/<path>`, `/blob/<path>` | Page routes, same URL scheme as GitHub |
