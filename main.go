@@ -30,6 +30,7 @@ type config struct {
 	ignore     map[string]bool
 	maxView    int64  // 超过这个大小的文件不做高亮/渲染，只给下载链接
 	lang       string // 界面默认语言，浏览器里可切换
+	grep       bool   // 是否开启全文搜索（每次搜索都要读一遍文件，大目录较慢，默认关闭）
 }
 
 func main() {
@@ -40,6 +41,7 @@ func main() {
 		hidden  = flag.Bool("hidden", false, "show dotfiles")
 		ignore  = flag.String("ignore", ".git,node_modules,__pycache__,.venv,.idea,.vscode", "comma-separated file/directory names to ignore")
 		maxView = flag.Int64("max-size", 2<<20, "max file size in bytes to render in the browser")
+		grep    = flag.Bool("grep", envOr("CODEVIEW_GREP", "") == "1", "enable full-text search (env CODEVIEW_GREP=1)")
 		lang    = flag.String("lang", envOr("CODEVIEW_LANG", "en"), "default UI language: en or zh (env CODEVIEW_LANG)")
 		showVer = flag.Bool("version", false, "print version and exit")
 	)
@@ -72,6 +74,7 @@ func main() {
 		ignore:     map[string]bool{},
 		maxView:    *maxView,
 		lang:       *lang,
+		grep:       *grep,
 	}
 	if cfg.lang != "en" && cfg.lang != "zh" {
 		log.Fatalf("unsupported -lang %q (use en or zh)", cfg.lang)
