@@ -1,0 +1,19 @@
+# systemd 用户服务示例：登录后自动运行 codeview
+#
+# 安装：
+#   mkdir -p ~/.config/systemd/user
+#   cp codeview.service ~/.config/systemd/user/
+#   # 按需修改下面的 -root 和 -addr
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now codeview
+# 日志：journalctl --user -u codeview -f
+[Unit]
+Description=codeview - 类 GitHub 的本地代码浏览器
+After=network.target
+
+[Service]
+ExecStart=%h/.local/bin/codeview -root %h/projects -addr 127.0.0.1:8080
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

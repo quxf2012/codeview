@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="{{.Lang}}" data-default-lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}</title>
+<script>
+  // set theme and language early to avoid flashing
+  window.CV_THEMES = {{.Themes}};
+  (function () {
+    var root = document.documentElement;
+    var byId = {};
+    CV_THEMES.forEach(function (t) { byId[t.id] = t; });
+    var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+    // "auto" 跟随系统；旧版本存的 light/dark 映射到 GitHub 主题
+    window.cvApplyTheme = function (choice) {
+      if (choice === "light") choice = "github-light";
+      if (choice === "dark") choice = "github-dark";
+      var id = byId[choice] ? choice : (mq && mq.matches ? "github-dark" : "github-light");
+      root.setAttribute("data-theme", id);
+      root.setAttribute("data-scheme", byId[id].scheme);
+      root.setAttribute("data-theme-choice", byId[choice] ? choice : "auto");
+    };
+    var saved = null;
+    try { saved = localStorage.getItem("cv-theme"); } catch (e) {}
+    cvApplyTheme(saved || "auto");
+    if (mq && mq.addEventListener) mq.addEventListener("change", function () {
+      if (root.getAttribute("data-theme-choice") === "auto") cvApplyTheme("auto");
+    });
+    var l = null;
+    try { l = localStorage.getItem("cv-lang"); } catch (e) {}
+    if (l === "en" || l === "zh") root.setAttribute("lang", l);
+  })();
+</script>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%2357606a' d='M1.75 1h8.5c.966 0 1.75.784 1.75 1.75v5.5A1.75 1.75 0 0 1 10.25 10H7.061l-2.574 2.573A1.458 1.458 0 0 1 2 11.543V10h-.25A1.75 1.75 0 0 1 0 8.25v-5.5C0 1.784.784 1 1.75 1Z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/api/theme.css">
+</head>
+<body>
+<header class="topbar">
+  <button class="icon-btn" id="toggle-side" data-i18n-title="toggleTree">
+    <svg viewBox="0 0 16 16" width="16" height="16"><path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z"/></svg>
+  </button>
+  <a class="brand" href="/" data-nav>{{.Title}}</a>
+  <div class="search">
+    <input id="search" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="searchPlaceholder">
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+  <button class="icon-btn lang-btn" id="toggle-lang" data-i18n-title="toggleLang"></button>
+  <div class="theme-picker">
+  <button class="icon-btn" id="toggle-theme" data-i18n-title="toggleTheme" aria-haspopup="true">
+    <svg viewBox="0 0 16 16" width="16" height="16"><path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm5.657-8.157a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.06-1.06a.75.75 0 0 1 1.06 0ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0ZM0 8a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 8Zm13 0a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 0 1.5h-1.5A.75.75 0 0 1 13 8Zm-5 5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13Z"/></svg>
+  </button>
+  <div class="theme-menu" id="theme-menu" hidden></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <span data-i18n="files"></span>
+      <button class="icon-btn small" id="collapse-all" data-i18n-title="collapseAll">
+        <svg viewBox="0 0 16 16" width="14" height="14"><path d="M10.896 2H8.75V.75a.75.75 0 0 0-1.5 0V2H5.104a.25.25 0 0 0-.177.427l2.896 2.896a.25.25 0 0 0 .354 0l2.896-2.896A.25.25 0 0 0 10.896 2ZM8.75 15.25a.75.75 0 0 1-1.5 0V14H5.104a.25.25 0 0 1-.177-.427l2.896-2.896a.25.25 0 0 1 .354 0l2.896 2.896a.25.25 0 0 1-.177.427H8.75v1.25Zm-6.5-6.5a.75.75 0 0 0 0-1.5h-.5a.75.75 0 0 0 0 1.5h.5ZM6 8a.75.75 0 0 1-.75.75h-.5a.75.75 0 0 1 0-1.5h.5A.75.75 0 0 1 6 8Zm2.25.75a.75.75 0 0 0 0-1.5h-.5a.75.75 0 0 0 0 1.5h.5ZM12 8a.75.75 0 0 1-.75.75h-.5a.75.75 0 0 1 0-1.5h.5A.75.75 0 0 1 12 8Zm2.25.75a.75.75 0 0 0 0-1.5h-.5a.75.75 0 0 0 0 1.5h.5Z"/></svg>
+      </button>
+    </div>
+    <nav class="tree" id="tree"></nav>
+    <div class="resizer" id="resizer"></div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="loading" data-i18n="loading"></div>
+  </main>
+
+  <aside class="outline" id="outline" hidden>
+    <div class="side-head"><span data-i18n="outline"></span></div>
+    <nav id="outline-list"></nav>
+  </aside>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
