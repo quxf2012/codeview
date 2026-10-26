@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/alecthomas/chroma/v2"
 	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/alecthomas/chroma/v2/styles"
 )
@@ -103,6 +104,39 @@ func themeCSS() []byte {
 			}
 			buf.WriteString(line + "\n")
 		}
+		writeTokenFallbacks(&buf, scope, styles.Get(t.Chroma))
 	}
 	return buf.Bytes()
+}
+
+// 有些样式没给这些类别配颜色（比如 github-dark 没有 NameAttribute / NameBuiltin），
+// shell 的参数、内置命令就会和普通文字一样。没配的借用同一样式里相近类别的颜色。
+var tokenFallbacks = []struct {
+	tt   chroma.TokenType
+	from []chroma.TokenType
+}{
+	{chroma.NameFunction, []chroma.TokenType{chroma.NameClass, chroma.Keyword}},
+	{chroma.NameAttribute, []chroma.TokenType{chroma.NameTag, chroma.NameVariable, chroma.NameConstant, chroma.Keyword}},
+	{chroma.NameBuiltin, []chroma.TokenType{chroma.NameClass, chroma.KeywordType, chroma.NameFunction}},
+	{chroma.NameVariable, []chroma.TokenType{chroma.NameConstant, chroma.LiteralStringOther, chroma.LiteralNumber}},
+	{chroma.LiteralNumber, []chroma.TokenType{chroma.LiteralNumberInteger, chroma.LiteralString}},
+}
+
+func writeTokenFallbacks(buf *bytes.Buffer, scope string, style *chroma.Style) {
+	plain := style.Get(chroma.Text).Colour
+	colored := func(tt chroma.TokenType) (chroma.Colour, bool) {
+		c := style.Get(tt).Colour
+		return c, c.IsSet() && c != plain
+	}
+	for _, f := range tokenFallbacks {
+		if _, ok := colored(f.tt); ok {
+			continue
+		}
+		for _, from := range f.from {
+			if c, ok := colored(from); ok {
+				fmt.Fprintf(buf, "%s .chroma .%s { color: %s }\n", scope, chroma.StandardTypes[f.tt], c)
+				break
+			}
+		}
+	}
 }
